@@ -1,0 +1,551 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"users",
+				"Users"
+			],
+			[
+				"Inst",
+				"Institutions"
+			],
+			[
+				"Print",
+				"PrintWriter"
+			],
+			[
+				"get",
+				"getCSVHeader"
+			],
+			[
+				"in",
+				"installations"
+			],
+			[
+				"file",
+				"fileName"
+			],
+			[
+				"print",
+				"printStackTrace"
+			],
+			[
+				"con",
+				"contentInBytes"
+			],
+			[
+				"l",
+				"listAsCSV"
+			],
+			[
+				"Ligo",
+				"LigoInstallationsCSV"
+			],
+			[
+				"main",
+				"mainMenu"
+			],
+			[
+				"cha",
+				"channels"
+			],
+			[
+				"chan",
+				"channelsStr"
+			],
+			[
+				"setP",
+				"setParseVersion"
+			],
+			[
+				"setD",
+				"setDeviceType"
+			],
+			[
+				"setApp",
+				"setAppVersion"
+			],
+			[
+				"n",
+				"nextString"
+			],
+			[
+				"setA",
+				"setAppName"
+			],
+			[
+				"app",
+				"appIdentifier"
+			],
+			[
+				"ap",
+				"appName"
+			],
+			[
+				"dev",
+				"deviceToken"
+			],
+			[
+				"de",
+				"deviceToken"
+			],
+			[
+				"ins",
+				"installationId"
+			],
+			[
+				"pu",
+				"pushType"
+			],
+			[
+				"cle",
+				"clearConsole"
+			],
+			[
+				"setEm",
+				"setEmailSender"
+			],
+			[
+				"ema",
+				"emailSender"
+			],
+			[
+				"setE",
+				"setEmailReceiver"
+			],
+			[
+				"po",
+				"postFK"
+			],
+			[
+				"me",
+				"message"
+			],
+			[
+				"em",
+				"emailSender"
+			],
+			[
+				"email",
+				"emailReceiver"
+			],
+			[
+				"class",
+				"className"
+			],
+			[
+				"setV",
+				"setViewedOn"
+			],
+			[
+				"setU",
+				"setUserFK"
+			],
+			[
+				"next",
+				"nextString"
+			],
+			[
+				"getF",
+				"getFileFromJSON"
+			],
+			[
+				"setIn",
+				"setInstitutionFK"
+			],
+			[
+				"setC",
+				"setCouponID"
+			],
+			[
+				"view",
+				"viewedOn"
+			],
+			[
+				"vie",
+				"viewedOn"
+			],
+			[
+				"ca",
+				"categoryFK"
+			],
+			[
+				"E",
+				"E"
+			],
+			[
+				"com",
+				"comments"
+			],
+			[
+				"fin",
+				"finest"
+			],
+			[
+				"No",
+				"nextBoolean"
+			],
+			[
+				"u",
+				"userType"
+			],
+			[
+				"m",
+				"major"
+			],
+			[
+				"g",
+				"graduatingClass"
+			],
+			[
+				"St",
+				"String"
+			],
+			[
+				"seta",
+				"setauthorFK"
+			],
+			[
+				"re",
+				"reader"
+			],
+			[
+				"Strin",
+				"StringBuilder"
+			],
+			[
+				"N",
+				"nextName"
+			],
+			[
+				"I",
+				"Institutions"
+			],
+			[
+				"Cat",
+				"Category"
+			],
+			[
+				"objectId",
+				"objectId"
+			],
+			[
+				"set",
+				"setFromJSON"
+			],
+			[
+				"J",
+				"JsonReader"
+			],
+			[
+				"Ce",
+				"Categories"
+			],
+			[
+				"Categor",
+				"Categories"
+			],
+			[
+				"Cate",
+				"Categories"
+			],
+			[
+				"IDEA",
+				"IDEA_JDK"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"selected_items":
+		[
+			[
+				"pack",
+				"Package Control: Install Package"
+			],
+			[
+				"pa",
+				"Package Control: Install Package"
+			],
+			[
+				"git:pu",
+				"Git: Push Current Branch"
+			],
+			[
+				"GIT:STAT",
+				"Git: Status"
+			],
+			[
+				"GIT:SHO",
+				"Git: Show"
+			],
+			[
+				"form",
+				"Eclipse: Format Java"
+			],
+			[
+				"",
+				"Eclipse: Format Java"
+			],
+			[
+				"git:stat",
+				"Git: Status"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 575.0
+	},
+	"console":
+	{
+		"height": 139.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/home/ptdecker/code/java/README.md",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/User.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Category.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/LigoMCP.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Installations.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Categories.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Emails.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Comments.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Institutions.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Posts.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Users.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Installation.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/LigoInstallationsCSV.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/LigoCategoriesCSV.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Institution.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/InstallationsComp.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/LigoUsersCSV.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/LigoPostsCSV.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/LigoInstitutionsCSV.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/LigoEmailsCSV.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/LigoCommentsCSV.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/EmailsComp.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Email.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/PostsComp.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Post.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/ParseHandler.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/UsersComp.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/Comment.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/CommentsComp.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/InstitutionComp.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/CategoryComp.java",
+		"/home/ptdecker/code/java/src/com/ligo/ligostats/LigoLogger.java",
+		"/home/ptdecker/code/java/ligo/SimpleGetLigoCategories.java",
+		"/home/ptdecker/code/java/ligo/SimpleGetLigoCategories2.java",
+		"/home/ptdecker/code/java/com/ligo/ligostats/LigoCategoriesCSV.java",
+		"/home/ptdecker/code/java/com/ligo/ligostats/LigoCategoriesCSV",
+		"/home/ptdecker/idea-IU-135.690/bin/idea.sh",
+		"/home/ptdecker/idea-IU-135.690/idea.sh"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"installations",
+			"Email",
+			"emailObject",
+			"emails",
+			"Email",
+			"Emails",
+			"Email",
+			"Emails",
+			"Post",
+			"postObject",
+			"posts",
+			"Post",
+			"Posts",
+			"LigoPostsCSV",
+			"Users",
+			"users",
+			"Users",
+			"UsersComp",
+			"users",
+			"userObject",
+			"User",
+			"reader.getFKFromJSON",
+			"  ",
+			"Comment",
+			"Comments",
+			"setauthorFK",
+			"author",
+			"\n            ",
+			"Institutions",
+			"LigoInstitutionsCSV",
+			"Institution",
+			"Institutions",
+			"Institution",
+			"Categories",
+			"LigoCategoriesCSV",
+			"categories",
+			"Category",
+			"IDEA_JDK"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"users",
+			"posts",
+			"institutions",
+			"emails",
+			"comments",
+			"categories",
+			"installation",
+			"installationObject",
+			"installations",
+			"Installation",
+			"Installations",
+			"Installation",
+			"Installations",
+			"Email",
+			"emailObject",
+			"emails",
+			"Email",
+			"Emails",
+			"LigoEmailsCSV",
+			"Posts",
+			"posts",
+			"Posts",
+			"PostsComp",
+			"posts",
+			"postObject",
+			"Post",
+			"getFKFromJSON",
+			" ",
+			"User",
+			"Users",
+			"setAuthorFK",
+			"authorFK",
+			"Comments",
+			"LigoCommentsCSV",
+			"Comment",
+			"Comments",
+			"Comment",
+			"Institutions",
+			"LigoInstitutionsCSV",
+			"institutions",
+			"categories",
+			"Institution",
+			"Category"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.git-commit":
+	{
+		"height": 112.0
+	},
+	"output.git-push":
+	{
+		"height": 112.0
+	},
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"selected_items":
+		[
+			[
+				"",
+				"/home/ptdecker/code/wumpus/src/org/ptodd/wumpus/wumpus.sublime-project"
+			]
+		],
+		"width": 380.0
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 246.0,
+	"status_bar_visible": true
+}
