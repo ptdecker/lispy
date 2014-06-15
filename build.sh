@@ -4,5 +4,5 @@
 #    sudo apt-get install libedit-dev
 
 #!/bin/bash          
-echo Compiling...
-cc -std=c99 -Wall -ggdb $1.c -ledit -o $1
+echo Compiling... $1.c
+cc -std=c99 -Wall -ggdb $1.c mpc.c -ledit -lm -o $1
