@@ -61,24 +61,38 @@ void add_history(char* unused) {}
 
 /* Declare lval structure to carry errors and support multiple types */
 
-typedef struct {
-	int  type;
+union {
 	long num;
 	int  err;
+} lval_data;
+
+typedef struct {
+	int type;
+	union {
+		long num;
+		int  err;
+	} data;
 } lval;
 
 /* Create enumerated types for supported lval types and error codes */
 
-enum { LVAL_NUM, LVAL_ERR };
+enum lval_types {
+	LVAL_NUM,
+	LVAL_ERR
+};
 
-enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM };
+enum err_codes {
+	LERR_DIV_ZERO,
+	LERR_BAD_OP,
+	LERR_BAD_NUM
+};
 
 /* Create a new number type lval */
 
 lval lval_num(long x) {
 	lval v;
 	v.type = LVAL_NUM;
-	v.num  = x;
+	v.data.num  = x;
 	return v;
 }
 
@@ -87,7 +101,7 @@ lval lval_num(long x) {
 lval lval_err(int x) {
 	lval v;
 	v.type = LVAL_ERR;
-	v.err  = x;
+	v.data.err = x;
 	return v;
 }
 
@@ -95,7 +109,7 @@ lval lval_err(int x) {
 
 void lval_print_err(lval v) {
 	if (v.type == LVAL_ERR) {
-		switch (v.err) {
+		switch (v.data.err) {
 			case LERR_BAD_NUM:
 				printf("Error: Encountered an invalid number!");
 				break;
@@ -106,7 +120,7 @@ void lval_print_err(lval v) {
 				printf("Error: Attempted to divide by zero!");
 				break;
 			default:
-				printf("Error: An unknown error of error code '%d' occurred!", v.err);
+				printf("Error: An unknown error of error code '%d' occurred!", v.data.err);
 		}
 	} else {
 		printf("Error: Asked to print an error message but not passed an error type of '%d'!", v.type);
@@ -119,7 +133,7 @@ void lval_print_err(lval v) {
 void lval_print(lval v) {
 	switch (v.type) {
 		case LVAL_NUM:
-			printf("%li", v.num);
+			printf("%li", v.data.num);
 			break;
 		case LVAL_ERR:
 			lval_print_err(v);
@@ -149,7 +163,7 @@ lval eval_unary_op(lval x, char* op) {
 	/* Evaluate the unary operation properly handling any errors encountered */
 
 	if (strcmp(op, "-") == 0) {
-		return lval_num(- x.num);
+		return lval_num(- x.data.num);
 	}
 
 	/* If we made it this far, then we don't yet know how to handle the operator */
@@ -177,39 +191,39 @@ lval eval_nary_op(lval x, char* op, lval y) {
 	 */
 
 	if ((strcmp(op, "+") == 0) || (strcmp(op, "add") == 0)) {
-		return lval_num(x.num + y.num);
+		return lval_num(x.data.num + y.data.num);
 	}
 
 	if ((strcmp(op, "-") == 0) || (strcmp(op, "sub") == 0)) {
-		return lval_num(x.num - y.num);
+		return lval_num(x.data.num - y.data.num);
 	}
 
 	if ((strcmp(op, "*") == 0) || (strcmp(op, "mul") == 0)) {
-		return lval_num(x.num * y.num);
+		return lval_num(x.data.num * y.data.num);
 	}
 
 	if ((strcmp(op, "/") == 0) || (strcmp(op, "div") == 0)) {
-		if (y.num == 0) {
+		if (y.data.num == 0) {
 			return lval_err(LERR_DIV_ZERO);
 		} else {
-			return lval_num(x.num / y.num);
+			return lval_num(x.data.num / y.data.num);
 		}
 	}
 
 	if ((strcmp(op, "%") == 0) || (strcmp(op, "mod") == 0)) {
-		return lval_num(x.num % y.num);
+		return lval_num(x.data.num % y.data.num);
 	}
 
 	if ((strcmp(op, "^") == 0) || (strcmp(op, "exp") == 0)) {
-		return lval_num(pow(x.num, y.num));
+		return lval_num(pow(x.data.num, y.data.num));
 	}
 
 	if (strcmp(op, "min") == 0) {
-		return lval_num((x.num < y.num) ? x.num : y.num);
+		return lval_num((x.data.num < y.data.num) ? x.data.num : y.data.num);
 	}
 
 	if (strcmp(op, "max") == 0) {
-		return lval_num((x.num > y.num) ? x.num : y.num);
+		return lval_num((x.data.num > y.data.num) ? x.data.num : y.data.num);
 	}
 
 	/* If we made it this far, then we don't yet know how to handle the operator */
@@ -225,7 +239,6 @@ lval eval(mpc_ast_t* t) {
 	/* If tagged as a number return it directly; otherwise, handle expression */
 
 	if (strstr(t->tag, "number")) {
-		printf("reading contents %s\n",t->contents);
 		errno = 0;		
 		long x = strtol(t->contents, NULL, 10);
 		if (errno != ERANGE) {
@@ -283,7 +296,7 @@ int main (int argc, char** argv) {
     		number   : /-?[0-9]+/ ; \
     		operator : '+' | '-' | '*' | '/' | '%' | '^' | \
     		           \"add\" | \"sub\" | \"mul\" | \"div\" | \"mod\" | \"exp\" | \
-    		           \"min\" | \"max\" ; \
+    		           \"min\" | \"max\" | \"and\" ; \
     		expr     : <number> | '(' <operator> <expr>+ ')' ; \
     		lispy    : /^/ <operator> <expr>+ /$/ ; \
   		",
