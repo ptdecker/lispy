@@ -59,66 +59,180 @@ void add_history(char* unused) {}
 
 #endif
 
+/* Declare lval structure to carry errors and support multiple types */
+
+typedef struct {
+	int  type;
+	long num;
+	int  err;
+} lval;
+
+/* Create enumerated types for supported lval types and error codes */
+
+enum { LVAL_NUM, LVAL_ERR };
+
+enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM };
+
+/* Create a new number type lval */
+
+lval lval_num(long x) {
+	lval v;
+	v.type = LVAL_NUM;
+	v.num  = x;
+	return v;
+}
+
+/* Create a new error type lval */
+
+lval lval_err(int x) {
+	lval v;
+	v.type = LVAL_ERR;
+	v.err  = x;
+	return v;
+}
+
+/* Print an lval error code */
+
+void lval_print_err(lval v) {
+	if (v.type == LVAL_ERR) {
+		switch (v.err) {
+			case LERR_BAD_NUM:
+				printf("Error: Encountered an invalid number!");
+				break;
+			case LERR_BAD_OP:
+				printf("Error: Encountered an invalid operator!");
+				break;
+			case LERR_DIV_ZERO:
+				printf("Error: Attempted to divide by zero!");
+				break;
+			default:
+				printf("Error: An unknown error of error code '%d' occurred!", v.err);
+		}
+	} else {
+		printf("Error: Asked to print an error message but not passed an error type of '%d'!", v.type);
+	}
+}
+
+
+/* Print an lval */
+
+void lval_print(lval v) {
+	switch (v.type) {
+		case LVAL_NUM:
+			printf("%li", v.num);
+			break;
+		case LVAL_ERR:
+			lval_print_err(v);
+			break;
+		default:
+			printf("Error: Attempted to print an unknown type of type code '%d'!", v.type);
+	}
+}
+
+/* Print an lval followed by a new line */
+
+void lval_println(lval v) {
+	lval_print(v);
+	putchar('\n');
+}
+
 /* Evaluate unary operators */
 
-long eval_unary_op(long x, char* op) {
+lval eval_unary_op(lval x, char* op) {
 
-	if (strcmp(op, "-") == 0) {
-		return (- x);
+	/* Handle being passed a value that is already an error */
+
+	if (x.type == LVAL_ERR) {
+		return x;
 	}
 
-	return 0;
+	/* Evaluate the unary operation properly handling any errors encountered */
+
+	if (strcmp(op, "-") == 0) {
+		return lval_num(- x.num);
+	}
+
+	/* If we made it this far, then we don't yet know how to handle the operator */
+
+	return lval_err(LERR_BAD_OP);
 
 }
 
 /* Evaluate n-ary operators */
 
-long eval_nary_op(long x, char* op, long y) {
+lval eval_nary_op(lval x, char* op, lval y) {
+
+	/* Handle being passed a value that is already an error */
+
+	if (x.type == LVAL_ERR) {
+		return x;
+	}
+
+	if (y.type == LVAL_ERR) {
+		return y;
+	}
+
+	/* Evaluate the first binary values of what could be a n-ary operation and
+	 * properly handle any errors encountered.
+	 */
 
 	if ((strcmp(op, "+") == 0) || (strcmp(op, "add") == 0)) {
-		return x + y;
+		return lval_num(x.num + y.num);
 	}
 
 	if ((strcmp(op, "-") == 0) || (strcmp(op, "sub") == 0)) {
-		return x - y;
+		return lval_num(x.num - y.num);
 	}
 
 	if ((strcmp(op, "*") == 0) || (strcmp(op, "mul") == 0)) {
-		return x * y;
+		return lval_num(x.num * y.num);
 	}
 
 	if ((strcmp(op, "/") == 0) || (strcmp(op, "div") == 0)) {
-		return x / y;
+		if (y.num == 0) {
+			return lval_err(LERR_DIV_ZERO);
+		} else {
+			return lval_num(x.num / y.num);
+		}
 	}
 
 	if ((strcmp(op, "%") == 0) || (strcmp(op, "mod") == 0)) {
-		return x % y;
+		return lval_num(x.num % y.num);
 	}
 
 	if ((strcmp(op, "^") == 0) || (strcmp(op, "exp") == 0)) {
-		return pow(x, y);
+		return lval_num(pow(x.num, y.num));
 	}
 
 	if (strcmp(op, "min") == 0) {
-		return (x < y) ? x : y;
+		return lval_num((x.num < y.num) ? x.num : y.num);
 	}
 
 	if (strcmp(op, "max") == 0) {
-		return (x > y) ? x : y;
+		return lval_num((x.num > y.num) ? x.num : y.num);
 	}
 
-	return 0;
+	/* If we made it this far, then we don't yet know how to handle the operator */
+
+	return lval_err(LERR_BAD_OP);
 
 }
 
 /* Recursive evalution function */
 
-long eval(mpc_ast_t* t) {
+lval eval(mpc_ast_t* t) {
 
 	/* If tagged as a number return it directly; otherwise, handle expression */
 
 	if (strstr(t->tag, "number")) {
-		return atoi(t->contents);
+		printf("reading contents %s\n",t->contents);
+		errno = 0;		
+		long x = strtol(t->contents, NULL, 10);
+		if (errno != ERANGE) {
+			return lval_num(x);
+		} else {
+			return lval_err(LERR_BAD_NUM);
+		}
 	}
 
 	/* The operator is always the second child */
@@ -127,7 +241,7 @@ long eval(mpc_ast_t* t) {
 
 	/* We store the third child in 'x' */
 
-	long x = eval(t->children[2]);
+	lval x = eval(t->children[2]);
 
 	/* Iterate over the remaining children combining them using our operator */
 
@@ -195,11 +309,11 @@ int main (int argc, char** argv) {
 
 		if (mpc_parse("<stdin>", input, Lispy, &r)) {
 
-			long result = eval(r.output);
+			lval result = eval(r.output);
 
 			/* Print */
 
-			printf("%li\n", result);
+			lval_println(result);
 			mpc_ast_delete(r.output);
 
 		} else {
