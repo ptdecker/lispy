@@ -59,9 +59,21 @@ void add_history(char* unused) {}
 
 #endif
 
-/* Evaluate our operator */
+/* Evaluate unary operators */
 
-long eval_op(long x, char* op, long y) {
+long eval_unary_op(long x, char* op) {
+
+	if (strcmp(op, "-") == 0) {
+		return (- x);
+	}
+
+	return 0;
+
+}
+
+/* Evaluate n-ary operators */
+
+long eval_nary_op(long x, char* op, long y) {
 
 	if ((strcmp(op, "+") == 0) || (strcmp(op, "add") == 0)) {
 		return x + y;
@@ -80,7 +92,19 @@ long eval_op(long x, char* op, long y) {
 	}
 
 	if ((strcmp(op, "%") == 0) || (strcmp(op, "mod") == 0)) {
-		return x / y;
+		return x % y;
+	}
+
+	if ((strcmp(op, "^") == 0) || (strcmp(op, "exp") == 0)) {
+		return pow(x, y);
+	}
+
+	if (strcmp(op, "min") == 0) {
+		return (x < y) ? x : y;
+	}
+
+	if (strcmp(op, "max") == 0) {
+		return (x > y) ? x : y;
 	}
 
 	return 0;
@@ -107,10 +131,22 @@ long eval(mpc_ast_t* t) {
 
 	/* Iterate over the remaining children combining them using our operator */
 
-	int i = 3;
-	while (strstr(t->children[i]->tag, "expr")) {
-		x = eval_op(x, op, eval(t->children[i]));
-		i++;
+	if(strstr(t->children[3]->tag, "expr")) {
+
+		/* Handle binary and n-ary operatarors */
+
+		int i = 3;
+		while (strstr(t->children[i]->tag, "expr")) {
+			x = eval_nary_op(x, op, eval(t->children[i]));
+			i++;
+		}
+
+	} else {
+
+		/* Handle unary operators */
+
+		x = eval_unary_op(x, op);
+
 	}
 
 	return x;
@@ -131,8 +167,9 @@ int main (int argc, char** argv) {
 	mpca_lang(MPCA_LANG_DEFAULT,
   		" \
     		number   : /-?[0-9]+/ ; \
-    		operator : '+' | '-' | '*' | '/' | '%' | \
-    		           \"add\" | \"sub\" | \"mul\" | \"div\" | \"mod\" ; \
+    		operator : '+' | '-' | '*' | '/' | '%' | '^' | \
+    		           \"add\" | \"sub\" | \"mul\" | \"div\" | \"mod\" | \"exp\" | \
+    		           \"min\" | \"max\" ; \
     		expr     : <number> | '(' <operator> <expr>+ ')' ; \
     		lispy    : /^/ <operator> <expr>+ /$/ ; \
   		",
