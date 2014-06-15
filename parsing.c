@@ -1,4 +1,17 @@
-/* Provide a basic REPL (read, evaluate, print loop) example */
+/* Provide a basic REPL (read, evaluate, print loop) example
+ *
+ *
+ * LICENSE INFO
+ * ------------
+ *
+ * The licensed libraries used by this project are:
+ *    - Brian Fox's GNU Readline under GPL v3 (now maintained by Chet Ramey)
+ *           c.f. http://cnswww.cns.cwru.edu/php/chet/readline/rltop.html
+ *    - Daniel Holden's MPC under BSD3
+ *           c.f. https://github.com/orangeduck/mpc
+ *
+ * Due to the inclusion of GNU Readline, this project is also licensed under GPL v3
+ */
 
 /* Requires sudo apt-get install libedit-dev */
 
@@ -46,6 +59,64 @@ void add_history(char* unused) {}
 
 #endif
 
+/* Evaluate our operator */
+
+long eval_op(long x, char* op, long y) {
+
+	if ((strcmp(op, "+") == 0) || (strcmp(op, "add") == 0)) {
+		return x + y;
+	}
+
+	if ((strcmp(op, "-") == 0) || (strcmp(op, "sub") == 0)) {
+		return x - y;
+	}
+
+	if ((strcmp(op, "*") == 0) || (strcmp(op, "mul") == 0)) {
+		return x * y;
+	}
+
+	if ((strcmp(op, "/") == 0) || (strcmp(op, "div") == 0)) {
+		return x / y;
+	}
+
+	if ((strcmp(op, "%") == 0) || (strcmp(op, "mod") == 0)) {
+		return x / y;
+	}
+
+	return 0;
+
+}
+
+/* Recursive evalution function */
+
+long eval(mpc_ast_t* t) {
+
+	/* If tagged as a number return it directly; otherwise, handle expression */
+
+	if (strstr(t->tag, "number")) {
+		return atoi(t->contents);
+	}
+
+	/* The operator is always the second child */
+
+	char* op = t->children[1]->contents;
+
+	/* We store the third child in 'x' */
+
+	long x = eval(t->children[2]);
+
+	/* Iterate over the remaining children combining them using our operator */
+
+	int i = 3;
+	while (strstr(t->children[i]->tag, "expr")) {
+		x = eval_op(x, op, eval(t->children[i]));
+		i++;
+	}
+
+	return x;
+
+}
+
 /* Start REPL */
 
 int main (int argc, char** argv) {
@@ -69,33 +140,37 @@ int main (int argc, char** argv) {
 
 	/* Display Initialization Header */
 
-	puts("Lispy Couch Version 0.0.2");
+	puts("Lispy Couch Version 0.0.3");
 	puts("Press 'ctrl-c' to exit\n");
 
 	/* Enter into REPL */
 
 	while (true) {
 
-		/* Read */
+		/* Read and then parse the input */
 
 		char* input = readline("lc> ");
 		add_history(input);
 
-		/* Evaluate */
-
 		mpc_result_t r;
 
+		/* Evaluate */
+
 		if (mpc_parse("<stdin>", input, Lispy, &r)) {
-			mpc_ast_print(r.output);
+
+			long result = eval(r.output);
+
+			/* Print */
+
+			printf("%li\n", result);
 			mpc_ast_delete(r.output);
+
 		} else {
+
 			mpc_err_print(r.error);
 			mpc_err_delete(r.error);
+
 		}
-
-		/* Print */
-
-		printf("%s\n", input);
 
 		/* Loop */
 
