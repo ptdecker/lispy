@@ -497,12 +497,32 @@ lval* lval_join(lval* x, lval* y) {
   	return x;
 }
 
+/* Handle built-in 'cons' function */
+
+lval* builtin_cons(lval* a) {
+
+	for (int i = 0; i < a->count; i++) {
+    	LASSERT(a, (a->cell[i]->type == LVAL_QEXPR), "Function 'cons' passed incorrect type.");
+  	}
+
+  	lval* x = lval_pop(a, 0);
+
+  	while (a->count) {
+    	x = lval_join(x, lval_pop(a, 0));
+  	}
+
+  	lval_del(a);
+  	return x;
+}
+
+
 lval* builtin(lval* a, char* func) {
   	if (strcmp("list", func) == 0) { return builtin_list(a); }
   	if (strcmp("head", func) == 0) { return builtin_head(a); }
   	if (strcmp("tail", func) == 0) { return builtin_tail(a); }
   	if (strcmp("join", func) == 0) { return builtin_join(a); }
   	if (strcmp("eval", func) == 0) { return builtin_eval(a); }
+  	if (strcmp("cons", func) == 0) { return builtin_cons(a); }
   	if (strstr("+-/*", func)) { return builtin_op(a, func); }
   	lval_del(a);
   	return lval_err("Unknown Function!");
