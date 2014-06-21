@@ -422,15 +422,16 @@ lval* builtin_op(lval* a, char* op) {
 
 lval* builtin_head(lval* a) {
 
-  LASSERT(a, (a->count == 1                 ), "Function 'head' passed too many arguments!");
-  LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function 'head' passed incorrect type!");
-  LASSERT(a, (a->cell[0]->count != 0        ), "Function 'head' passed {}!");
+  	LASSERT(a, (a->count == 1                 ), "Function 'head' passed too many arguments!");
+  	LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function 'head' passed incorrect type!");
+  	LASSERT(a, (a->cell[0]->count != 0        ), "Function 'head' passed {}!");
 
-  lval* v = lval_take(a, 0);  
-  while (v->count > 1) {
-  	lval_del(lval_pop(v, 1));
-  }
-  return v;
+  	lval* v = lval_take(a, 0);  
+  	while (v->count > 1) {
+  		lval_del(lval_pop(v, 1));
+  	}
+
+  	return v;
 }
 
 /* Handle built-in 'tail' function */
@@ -443,6 +444,7 @@ lval* builtin_tail(lval* a) {
 
   	lval* v = lval_take(a, 0);  
   	lval_del(lval_pop(v, 0));
+
   	return v;
 }
 
@@ -532,6 +534,24 @@ lval* builtin_len(lval* a) {
   	return lval_eval(x);
 }
 
+/* Handle built-in 'init' function */
+
+lval* builtin_init(lval* a) {
+
+	LASSERT(a, (a->count == 1                 ), "Function 'init' passed too many arguments!");
+  	LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function 'init' passed incorrect type!");
+  	LASSERT(a, (a->cell[0]->count != 0        ), "Function 'init' passed {}!");
+
+  	lval* v = lval_qexpr();
+	while (a->cell[0]->count > 1) {
+  		lval_add(v, lval_pop(a->cell[0], 0));
+  	}
+  	lval_del(a);
+
+  	return v;
+
+
+}
 
 lval* builtin(lval* a, char* func) {
   	if (strcmp("list", func) == 0) { return builtin_list(a); }
@@ -540,8 +560,9 @@ lval* builtin(lval* a, char* func) {
   	if (strcmp("join", func) == 0) { return builtin_join(a); }
   	if (strcmp("eval", func) == 0) { return builtin_eval(a); }
   	if (strcmp("cons", func) == 0) { return builtin_cons(a); }
-  	if (strcmp("len", func) == 0) { return builtin_len(a); }
-  	if (strstr("+-/*", func)) { return builtin_op(a, func); }
+  	if (strcmp("len" , func) == 0) { return builtin_len(a);  }
+  	if (strcmp("init", func) == 0) { return builtin_init(a); }
+  	if (strstr("+-/*", func))      { return builtin_op(a, func); }
   	lval_del(a);
   	return lval_err("Unknown Function!");
 }
@@ -562,7 +583,7 @@ int main (int argc, char** argv) {
 	mpca_lang(MPCA_LANG_DEFAULT,
   		" \
     		number : /-?[0-9]+/ ; \
-    		symbol : \"len\" | \"cons\" | \"list\" | \"head\" | \"tail\" | \"join\" | \"eval\" |'+' | '-' | '*' | '/' | '%' ; \
+    		symbol : \"init\" | \"len\" | \"cons\" | \"list\" | \"head\" | \"tail\" | \"join\" | \"eval\" |'+' | '-' | '*' | '/' | '%' ; \
     		sexpr  : '(' <expr>* ')' ; \
     		qexpr  : '{' <expr>* '}' ; \
     		expr   : <number> | <symbol> | <sexpr> | <qexpr> ; \
