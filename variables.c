@@ -492,7 +492,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
 
 	/* Single expresssion */
 
-	if (v->count == 1) {
+	if ((v->count == 1) && (v->cell[0]->type != LVAL_FUN)) {
 		return lval_take(v, 0);
 	}
 
@@ -517,7 +517,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
 /* Evaluate expressions according to their type */
 
 lval* lval_eval(lenv* e, lval* v) {
-	
+
 	if (v->type == LVAL_SYM) {
 		lval* x = lenv_get(e, v);
 		lval_del(v);
@@ -529,33 +529,25 @@ lval* lval_eval(lenv* e, lval* v) {
 	}
 
 	return v;
-/*
-	switch (v->type) {
-		case LVAL_SYM:
-			lval* x = lenv_get(e, v);
-			lval_del(v);
-			return x;
-		case LVAL_SEXPR:
-			return lval_eval_sexpr(e, v);
-		default:
-			return v;
-	}
-*/
 }
 
 /* Extract a single element from an s-expression */
 
-lval* lval_pop (lval* v, int i) {
-	lval* x = v->cell[i];
-	memmove(&v->cell[i], &v->cell[i+1], sizeof(lval*) * (v->count-i-1));
-	v->count--;
-	v->cell = realloc(v->cell, sizeof(lval*) * v->count);
-	return x;
+lval* lval_pop(lval* v, int i) {
+	if (v != NULL) {
+		lval* x = v->cell[i];
+		memmove(&v->cell[i], &v->cell[i+1], sizeof(lval*) * (v->count-i-1));
+		v->count--;
+		v->cell = realloc(v->cell, sizeof(lval*) * v->count);
+		return x;
+	} else {
+		return lval_err("required parameters missing");
+	}
 }
 
 /* Extract and delete a single element from an s-expression */
 
-lval* lval_take (lval* v, int i) {
+lval* lval_take(lval* v, int i) {
 	lval* x = lval_pop(v, i);
 	lval_del(v);
 	return x;
@@ -564,6 +556,12 @@ lval* lval_take (lval* v, int i) {
 /* Handle built-in operations */
 
 lval* builtin_op(lenv* e, lval* a, char* op) {
+
+	/* Make sure we received some arguments */
+
+	if (a->count == 0) {
+		return lval_err("Math operation called with no arguments");
+	}
 
 	/* Ensure all arguments are numbers */
 
@@ -827,6 +825,19 @@ lval* builtin_def(lenv* e, lval* a) {
 	return lval_sexpr();
 }
 
+/* Create a q-expression that contains a list of all defined functions and variables */
+
+lval* builtin_vars(lenv* e, lval* a) {
+
+  	lval* v = lval_qexpr();
+	for (int i = 0; i < e->count; i++) {
+		lval_add(v, lval_sym(e->syms[i]));
+	}
+
+	return v;
+}
+
+
 /* Create built-in functions for each of the operators */
 
 lval* builtin_add(lenv* e, lval* a) { return builtin_op(e, a, "+"); }
@@ -834,25 +845,6 @@ lval* builtin_sub(lenv* e, lval* a) { return builtin_op(e, a, "-"); }
 lval* builtin_mul(lenv* e, lval* a) { return builtin_op(e, a, "*"); }
 lval* builtin_div(lenv* e, lval* a) { return builtin_op(e, a, "/"); }
 lval* builtin_mod(lenv* e, lval* a) { return builtin_op(e, a, "%"); }
-
-/* Dispatch to proper built-in fuction */
-
-lval* builtin(lenv* e, lval* a, char* func) {
-
-  	if (strcmp("list", func) == 0) { return builtin_list(e, a); }
-  	if (strcmp("head", func) == 0) { return builtin_head(e, a); }
-  	if (strcmp("tail", func) == 0) { return builtin_tail(e, a); }
-  	if (strcmp("join", func) == 0) { return builtin_join(e, a); }
-  	if (strcmp("eval", func) == 0) { return builtin_eval(e, a); }
-  	if (strcmp("cons", func) == 0) { return builtin_cons(e, a); }
-  	if (strcmp("len" , func) == 0) { return builtin_len(e, a);  }
-  	if (strcmp("init", func) == 0) { return builtin_init(e, a); }
-  	if (strstr("+-/*", func))      { return builtin_op(e, a, func); }
-
-  	lval_del(a);
-
-  	return lval_err("Unknown Function!");
-}
 
 /* Register a new built-in function with the environment */
 
@@ -881,6 +873,7 @@ void lenv_add_builtins(lenv* e) {
 	lenv_add_builtin(e, "len",  builtin_len);
 	lenv_add_builtin(e, "init", builtin_init);
 	lenv_add_builtin(e, "def",  builtin_def);
+	lenv_add_builtin(e, "vars", builtin_vars);
 
 	/* Mathematical Functions */
 
