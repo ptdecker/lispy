@@ -462,6 +462,7 @@ lval* builtin_eval(lval* a) {
 
   	lval* x = lval_take(a, 0);
   	x->type = LVAL_SEXPR;
+
   	return lval_eval(x);
 }
 
@@ -480,6 +481,7 @@ lval* builtin_join(lval* a) {
   	}
 
   	lval_del(a);
+
   	return x;
 }
 
@@ -494,6 +496,7 @@ lval* lval_join(lval* x, lval* y) {
   	/* Delete the empty 'y' and return 'x' */
 
   	lval_del(y);  
+
   	return x;
 }
 
@@ -501,17 +504,17 @@ lval* lval_join(lval* x, lval* y) {
 
 lval* builtin_cons(lval* a) {
 
-	for (int i = 0; i < a->count; i++) {
-    	LASSERT(a, (a->cell[i]->type == LVAL_QEXPR), "Function 'cons' passed incorrect type.");
+	LASSERT(a, (a->count == 2                 ), "Function 'cons' passed incorrect number of arguments!");
+  	LASSERT(a, (a->cell[0]->type == LVAL_NUM  ), "Function 'cons' passed first argument of incorrect type!");
+  	LASSERT(a, (a->cell[1]->type == LVAL_QEXPR), "Function 'cons' passed second argument of incorrect type!");
+
+  	lval* x = lval_qexpr();
+  	lval_add(x, lval_pop(a, 0));
+  	while (a->cell[0]->count) {
+  		lval_add(x, lval_pop(a->cell[0],0));
   	}
-
-  	lval* x = lval_pop(a, 0);
-
-  	while (a->count) {
-    	x = lval_join(x, lval_pop(a, 0));
-  	}
-
   	lval_del(a);
+
   	return x;
 }
 
@@ -519,18 +522,14 @@ lval* builtin_cons(lval* a) {
 
 lval* builtin_len(lval* a) {
 
-	for (int i = 0; i < a->count; i++) {
-    	LASSERT(a, (a->cell[i]->type == LVAL_QEXPR), "Function 'len' passed incorrect type.");
-  	}
+	LASSERT(a, (a->count == 1                 ), "Function 'len' passed too many arguments!");
+  	LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function 'len' passed incorrect type!");
 
-  	lval* x = lval_pop(a, 0);
-
-  	while (a->count) {
-    	x = lval_join(x, lval_pop(a, 0));
-  	}
-
+  	lval* x = lval_sexpr();
+  	lval_add(x, lval_num(a->cell[0]->count));
   	lval_del(a);
-  	return x;
+
+  	return lval_eval(x);
 }
 
 
