@@ -104,6 +104,7 @@ struct lval {
 
 struct lenv {
 	int 	count;
+	int*    types;
 	char**	syms;
 	lval**	vals;
 };
@@ -117,6 +118,13 @@ enum lval_types {
 	LVAL_FUN,
 	LVAL_SEXPR,
 	LVAL_QEXPR
+};
+
+/* Created enumerated type for environment variable types */
+
+enum lenv_types {
+	LENV_BUILTIN,
+	LENV_USERFUN
 };
 
 /* Construct a pointer to a new number type lisp value */
@@ -204,6 +212,7 @@ lval* lval_fun(lbuiltin func) {
 lenv* lenv_new(void) {
 	lenv* e = malloc(sizeof(lenv));
 	e->count = 0;
+	e->types = NULL;
 	e->syms  = NULL;
 	e->vals  = NULL;
 	return e;
@@ -237,8 +246,8 @@ void lval_del(lval* v) {
 /* Destruct an environment value */
 
 void lenv_del(lenv* e) {
-	for (int i = 0; i < e-> count; i++) {
-		free(e->syms[1]);
+	for (int i = 0; i < e->count; i++) {
+		free(e->syms[i]);
 		lval_del(e->vals[i]);
 	}
 	free(e->syms);
@@ -262,6 +271,19 @@ char* ltype_name(int t) {
 			return "S-Expression";
 		case LVAL_QEXPR:
 			return "Q-Expression";
+		default:
+			return "Unknown";
+	}
+}
+
+/* Return a nice name for a function type */
+
+char* etype_name(int t) {
+	switch(t) {
+		case LENV_BUILTIN:
+			return "Built-in";
+		case LENV_USERFUN:
+			return "Defined";
 		default:
 			return "Unknown";
 	}
@@ -407,7 +429,7 @@ void lval_print(lval* v) {
 			lval_expr_print(v, '{', '}');
 			break;
 		case LVAL_FUN:
-			printf("<function>");
+			printf("<function '%s'>", v->sym);
 			break;
 	}
 }
@@ -437,7 +459,18 @@ lval* lenv_get(lenv* e, lval* k) {
 
 }
 
-void lenv_put(lenv* e, lval* k, lval* v) {
+/* Check for an existing built-in function */
+
+bool lenv_isbuiltin(lenv* e, lval* k) {
+	for (int i = 0; i < e->count; i++) {
+	    if (strcmp(e->syms[i], k->sym) == 0) {
+	    	return (e->types[i] == LENV_BUILTIN);
+	    }
+	}
+	return false;
+}
+
+void lenv_put(lenv* e, lval* k, lval* v, int t) {
 
 	/* Iterate over all items in environment to see if variable already exists
 	 * and if a variable is found, delete the intem in that position replacing it
@@ -455,13 +488,15 @@ void lenv_put(lenv* e, lval* k, lval* v) {
 	/* If no existing entry found then allocate space for new entry */
 
 	e->count++;
-	e->vals = realloc(e->vals, sizeof(lval*) * e->count);
-	e->syms = realloc(e->syms, sizeof(char*) * e->count);
+	e->types = realloc(e->types, sizeof(int)   * e->count);
+	e->vals  = realloc(e->vals,  sizeof(lval*) * e->count);
+	e->syms  = realloc(e->syms,  sizeof(char*) * e->count);
 
 	/* Copy contents of lval and symbol string into new location */
 
-	e->vals[e->count-1] = lval_copy(v);
-	e->syms[e->count-1] = malloc(strlen(k->sym)+1);
+	e->types[e->count-1] = t;
+	e->vals[e->count-1]  = lval_copy(v);
+	e->syms[e->count-1]  = malloc(strlen(k->sym)+1);
 	strcpy(e->syms[e->count-1], k->sym);
 
 }
@@ -807,6 +842,8 @@ lval* builtin_def(lenv* e, lval* a) {
 	for (int i = 0; i < syms->count; i++) {
 		LASSERT(a, (syms->cell[i]->type == LVAL_SYM), \
 			"Function 'def' cannot define non-symbol");
+		LASSERT(a, (!lenv_isbuiltin(e, syms->cell[i])), \
+			"Function 'def' cannot redefine built-in function '%s'", syms->cell[i]->sym);
 	}
 
 	/* Check correct number of symbols and values */
@@ -817,7 +854,7 @@ lval* builtin_def(lenv* e, lval* a) {
 	/* Assign copies of values to symbols */
 
 	for (int i = 0; i < syms->count; i++) {
-		lenv_put(e, syms->cell[i], a->cell[i+1]);
+		lenv_put(e, syms->cell[i], a->cell[i+1], LENV_USERFUN);
 	}
 
 	lval_del(a);
@@ -831,12 +868,26 @@ lval* builtin_vars(lenv* e, lval* a) {
 
   	lval* v = lval_qexpr();
 	for (int i = 0; i < e->count; i++) {
-		lval_add(v, lval_sym(e->syms[i]));
+		lval* w = lval_qexpr();
+		lval_add(w, lval_sym(e->syms[i]));
+		lval_add(w, lval_sym(etype_name(e->types[i])));
+		lval_add(v, w);
 	}
 
 	return v;
 }
 
+/* Handle the quit command */
+
+lval* builtin_quit(lenv* e, lval* a) {
+
+	// Do nothing expect pass a null built-in function
+
+	lval* v = lval_fun(NULL);
+	v->sym = "quit";
+
+	return v;
+}
 
 /* Create built-in functions for each of the operators */
 
@@ -852,7 +903,7 @@ void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
 
 	lval* k = lval_sym(name);
 	lval* v = lval_fun(func);
-	lenv_put(e, k, v);
+	lenv_put(e, k, v, LENV_BUILTIN);
 	lval_del(k);
 	lval_del(v);
 
@@ -874,6 +925,7 @@ void lenv_add_builtins(lenv* e) {
 	lenv_add_builtin(e, "init", builtin_init);
 	lenv_add_builtin(e, "def",  builtin_def);
 	lenv_add_builtin(e, "vars", builtin_vars);
+	lenv_add_builtin(e, "quit", builtin_quit);
 
 	/* Mathematical Functions */
 
@@ -921,12 +973,14 @@ int main (int argc, char** argv) {
 
 	/* Display Initialization Header */
 
-	puts("Lispy Couch Version 0.0.3");
-	puts("Press 'ctrl-c' to exit\n");
+	puts("Lispy Version 0.0.6");
+	puts("Enter 'quit' to exit\n");
 
 	/* Enter into REPL */
 
-	while (true) {
+	bool repeatREPL = true;
+
+	while (repeatREPL) {
 
 		char* input = readline("lc> ");
 		add_history(input);
@@ -935,7 +989,10 @@ int main (int argc, char** argv) {
 
 		if (mpc_parse("<stdin>", input, Lispy, &r)) {
 			lval* x = lval_eval(e, lval_read(r.output));
-			lval_println(x);
+			repeatREPL = ((x->type != LVAL_FUN) || (strcmp(x->sym, "quit") != 0));
+			if (repeatREPL) {
+				lval_println(x);
+			}
 			lval_del(x);
 			mpc_ast_delete(r.output);
 		} else {
@@ -949,9 +1006,8 @@ int main (int argc, char** argv) {
 	/* Clean up and go home now that the hard work is done */
 
 	lenv_del(e);
-	mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
 
-	puts("Thank you\n");
+	mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
 
 	return EXIT_SUCCESS;
 }
