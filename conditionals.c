@@ -101,6 +101,7 @@ lenv* lenv_copy(lenv* e);
 lval* builtin(lenv* e, lval* a, char* func);
 lval* builtin_op(lenv* e, lval* a, char* op);
 lval* builtin_eval(lenv* e, lval* a);
+lval* builtin_list(lenv* e, lval* a);
 
 /* Declare lbuiltin function pointer */
 
@@ -598,6 +599,27 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
 
 		lval* sym = lval_pop(f->formals, 0);
 
+		/* Special case to deal with the '&' symbol */
+
+		if (strcmp(sym->sym, "&") == 0) {
+
+			/* Ensure '&' is followed by another symbol */
+
+			if (f->formals->count != 1) {
+				lval_del(a);
+				return lval_err("Function format invalid. Symbol '&' not followed by another symbol.");
+			}
+
+			/* Next formal should be bound to the remaining arguments */
+
+			lval* nsym = lval_pop(f->formals, 0);
+			lenv_put(f->env, nsym, builtin_list(e, a));
+			lval_del(sym);
+			lval_del(nsym);
+			break;
+
+		}
+
 		/* Pop the next argument from the list */
 
 		lval* val = lval_pop(a, 0);
@@ -616,6 +638,32 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
 	/* Argument list is now bound so can be cleaned up */
 
 	lval_del(a);
+
+	/* If '&' remains in formal list it should be bound to empty list */
+
+	if (f->formals->count > 0 && strcmp(f->formals->cell[0]->sym, "&") == 0) {
+
+		/* Check to ensure that & is not passed invalidly. */
+
+		if (f->formals->count != 2) {
+			return lval_err("Function format invalid. Symbol '&' not followed by single symbol.");
+		}
+
+		/* Pop and delete '&' symbol */
+
+		lval_del(lval_pop(f->formals, 0));
+
+		/* Pop next symbol and create empty list */
+
+		lval* sym = lval_pop(f->formals, 0);
+		lval* val = lval_qexpr();
+
+		/* Bind to environment and delete */
+
+		lenv_put(f->env, sym, val);
+		lval_del(sym);
+		lval_del(val);
+	}
 
 	/* If all formals have been bound evaluate */
 
@@ -1047,6 +1095,132 @@ lval* builtin_lamda(lenv* e, lval* a) {
 	return lval_lambda(formals, body);
 }
 
+/* Handle testing of number order */
+
+lval* builtin_ord(lenv* e, lval* a, char* op) {
+
+	/* Validate inputs */
+
+	LASSERT_NUM(op, a, 2);
+	LASSERT_TYPE(op, a, 0, LVAL_NUM);
+	LASSERT_TYPE(op, a, 1, LVAL_NUM);
+
+	int r;
+
+	if (strcmp(op, ">")  == 0) { r = (a->cell[0]->num >  a->cell[1]->num); }
+	if (strcmp(op, "<")  == 0) { r = (a->cell[0]->num <  a->cell[1]->num); }
+	if (strcmp(op, ">=") == 0) { r = (a->cell[0]->num >= a->cell[1]->num); }
+	if (strcmp(op, "<=") == 0) { r = (a->cell[0]->num <= a->cell[1]->num); }
+
+	lval_del(a);
+
+	return lval_num(r);
+
+}
+
+/* Handle equality testing */
+
+int lval_eq(lval* x, lval* y) {
+
+	/* Different Types are always unequal */
+
+	if (x->type != y->type) {
+		return 0;
+	}
+
+	/* Compare Based upon type */
+
+	switch (x->type) {
+
+		/* Compare Number Value */
+
+		case LVAL_NUM:
+			return (x->num == y->num);
+
+		/* Compare String Values */
+
+		case LVAL_ERR:
+			return (strcmp(x->err, y->err) == 0);
+		case LVAL_SYM:
+			return (strcmp(x->sym, y->sym) == 0);
+
+		/* If Builtin compare functions, otherwise compare formals and body */
+
+		case LVAL_FUN:
+			if (x->builtin || y->builtin) {
+				return x->builtin == y->builtin;
+			} else {
+				return lval_eq(x->formals, y->formals) && lval_eq(x->body, y->body);
+			}
+
+		/* If list compare every individual element */
+
+		case LVAL_QEXPR:
+		case LVAL_SEXPR:
+			if (x->count != y->count) {
+				return 0;
+			}
+			for (int i = 0; i < x->count; i++) {
+				/* If any element not equal then whole list not equal */
+				if (!lval_eq(x->cell[i], y->cell[i])) {
+					return 0;
+				}
+			}
+
+			/* Otherwise lists must be equal */
+
+			return 1;
+			break;
+	}
+
+	return 0;
+}
+
+/* Implement equality comparisions */
+
+lval* builtin_cmp(lenv* e, lval* a, char* op) {
+
+	LASSERT_NUM(op, a, 2);
+
+	int r;
+
+	if (strcmp(op, "==") == 0) { r =  lval_eq(a->cell[0], a->cell[1]); }
+	if (strcmp(op, "!=") == 0) { r = !lval_eq(a->cell[0], a->cell[1]); }
+	lval_del(a);
+
+	return lval_num(r);
+}
+
+/* Implement if-then-else function */
+
+lval* builtin_if(lenv* e, lval* a) {
+
+	LASSERT_NUM("if", a, 3);
+	LASSERT_TYPE("if", a, 0, LVAL_NUM);
+	LASSERT_TYPE("if", a, 1, LVAL_QEXPR);
+	LASSERT_TYPE("if", a, 2, LVAL_QEXPR);
+
+	/* Mark Both Expressions as evaluable */
+
+	lval* x;
+	a->cell[1]->type = LVAL_SEXPR;
+	a->cell[2]->type = LVAL_SEXPR;
+
+	if (a->cell[0]->num) {
+		/* If condition is true evaluate first expression */
+		x = lval_eval(e, lval_pop(a, 1));
+	} else {
+		/* Otherwise evaluate second expression */
+		x = lval_eval(e, lval_pop(a, 2));
+	}
+
+	/* Delete argument list and return */
+
+	lval_del(a);
+
+	return x;
+}
+
 /* Create built-in functions for each of the operators */
 
 lval* builtin_add(lenv* e, lval* a) { return builtin_op(e, a, "+"); }
@@ -1055,16 +1229,23 @@ lval* builtin_mul(lenv* e, lval* a) { return builtin_op(e, a, "*"); }
 lval* builtin_div(lenv* e, lval* a) { return builtin_op(e, a, "/"); }
 lval* builtin_mod(lenv* e, lval* a) { return builtin_op(e, a, "%"); }
 
+/* Create built-in functions for each of the order tests and equality */
+
+lval* builtin_gt(lenv* e, lval* a) { return builtin_ord(e, a, ">");  }
+lval* builtin_lt(lenv* e, lval* a) { return builtin_ord(e, a, "<");  }
+lval* builtin_ge(lenv* e, lval* a) { return builtin_ord(e, a, ">="); }
+lval* builtin_le(lenv* e, lval* a) { return builtin_ord(e, a, "<="); }
+lval* builtin_eq(lenv* e, lval* a) { return builtin_cmp(e, a, "=="); }
+lval* builtin_ne(lenv* e, lval* a) { return builtin_cmp(e, a, "!="); }
+
 /* Register a new built-in function with the environment */
 
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
-
 	lval* k = lval_sym(name);
 	lval* v = lval_fun(func);
 	lenv_put(e, k, v);
 	lval_del(k);
 	lval_del(v);
-
 }
 
 /* Register all the currently supported built-in fuctions with the environment */
@@ -1089,16 +1270,26 @@ void lenv_add_builtins(lenv* e) {
 
 	/* Mathematical Functions */
 
-	lenv_add_builtin(e, "+",   builtin_add);
-	lenv_add_builtin(e, "-",   builtin_sub);
-	lenv_add_builtin(e, "*",   builtin_mul);
-	lenv_add_builtin(e, "/",   builtin_div);
-	lenv_add_builtin(e, "%",   builtin_mod);
-	lenv_add_builtin(e, "add", builtin_add);
-	lenv_add_builtin(e, "sub", builtin_sub);
-	lenv_add_builtin(e, "mul", builtin_mul);
-	lenv_add_builtin(e, "div", builtin_div);
-	lenv_add_builtin(e, "mod", builtin_mod);
+	lenv_add_builtin(e, "+",    builtin_add);
+	lenv_add_builtin(e, "-",    builtin_sub);
+	lenv_add_builtin(e, "*",    builtin_mul);
+	lenv_add_builtin(e, "/",    builtin_div);
+	lenv_add_builtin(e, "%",    builtin_mod);
+	lenv_add_builtin(e, "add",  builtin_add);
+	lenv_add_builtin(e, "sub",  builtin_sub);
+	lenv_add_builtin(e, "mul",  builtin_mul);
+	lenv_add_builtin(e, "div",  builtin_div);
+	lenv_add_builtin(e, "mod",  builtin_mod);
+
+	/* Comparision Functions */
+
+	lenv_add_builtin(e, "if",   builtin_if);
+	lenv_add_builtin(e, "==",   builtin_eq);
+	lenv_add_builtin(e, "!=",   builtin_ne);
+	lenv_add_builtin(e, ">",    builtin_gt);
+	lenv_add_builtin(e, "<",    builtin_lt);
+	lenv_add_builtin(e, ">=",   builtin_ge);
+	lenv_add_builtin(e, "<=",   builtin_le);
 
 }
 
