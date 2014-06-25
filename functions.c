@@ -1176,23 +1176,6 @@ int lval_eq(lval* x, lval* y) {
 	return 0;
 }
 
-/* Implement a built-in "not" operator */
-
-lval* builtin_not(lenv* e, lval* a) {
-
-	LASSERT_NUM("!", a, 1);
-	LASSERT_TYPE("!", a, 0, LVAL_NUM);
-
-	lval* x = lval_pop(a, 0);
-
-	x->num = (x->num) ? 0 : 1;
-
-	lval_del(a);
-
-	return x;
-
-}
-
 /* Implement equality comparisions */
 
 lval* builtin_cmp(lenv* e, lval* a, char* op) {
@@ -1308,9 +1291,6 @@ void lenv_add_builtins(lenv* e) {
 	lenv_add_builtin(e, ">=",   builtin_ge);
 	lenv_add_builtin(e, "<=",   builtin_le);
 
-	/* Boolean and Logic Functions */
-
-	lenv_add_builtin(e, "!",    builtin_not);
 }
 
 /* Start REPL */
