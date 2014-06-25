@@ -1193,6 +1193,29 @@ lval* builtin_not(lenv* e, lval* a) {
 
 }
 
+/* Handle testing logic functions */
+
+lval* builtin_logic(lenv* e, lval* a, char* op) {
+
+	/* Validate inputs */
+
+	LASSERT_NUM(op, a, 2);
+	LASSERT_TYPE(op, a, 0, LVAL_NUM);
+	LASSERT_TYPE(op, a, 1, LVAL_NUM);
+
+	int r;
+
+	if (strcmp(op, "and")  == 0) { r = (a->cell[0]->num && a->cell[1]->num); }
+	if (strcmp(op, "or" )  == 0) { r = (a->cell[0]->num || a->cell[1]->num); }
+
+	lval_del(a);
+
+	return lval_num(r);
+
+}
+
+
+
 /* Implement equality comparisions */
 
 lval* builtin_cmp(lenv* e, lval* a, char* op) {
@@ -1255,6 +1278,11 @@ lval* builtin_le(lenv* e, lval* a) { return builtin_ord(e, a, "<="); }
 lval* builtin_eq(lenv* e, lval* a) { return builtin_cmp(e, a, "=="); }
 lval* builtin_ne(lenv* e, lval* a) { return builtin_cmp(e, a, "!="); }
 
+/* Create built-in boolean logic functions */
+
+lval* builtin_and(lenv* e, lval* a) { return builtin_logic(e, a, "and");  }
+lval* builtin_or(lenv* e, lval* a)  { return builtin_logic(e, a, "or");   }
+
 /* Register a new built-in function with the environment */
 
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
@@ -1311,6 +1339,10 @@ void lenv_add_builtins(lenv* e) {
 	/* Boolean and Logic Functions */
 
 	lenv_add_builtin(e, "!",    builtin_not);
+	lenv_add_builtin(e, "not",  builtin_not);
+	lenv_add_builtin(e, "and",  builtin_and);
+	lenv_add_builtin(e, "or",   builtin_or);
+
 }
 
 /* Start REPL */
