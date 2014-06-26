@@ -145,6 +145,7 @@ struct lenv {
 enum lval_types {
 	LVAL_ERR,
 	LVAL_NUM,
+	LVAL_BOOL,
 	LVAL_SYM,
 	LVAL_FUN,
 	LVAL_SEXPR,
@@ -157,6 +158,15 @@ lval* lval_num(long x) {
 	lval* v = malloc(sizeof(lval));
 	v->type = LVAL_NUM;
 	v->num  = x;
+	return v;
+}
+
+/* Construct a pointer to a new boolean type lisp value */
+
+lval* lval_bool(bool x) {
+	lval* v = malloc(sizeof(lval));
+	v->type = LVAL_BOOL;
+	v->num  = (x) ? 1 : 0;
 	return v;
 }
 
@@ -266,6 +276,7 @@ void lval_del(lval* v) {
 			}
 			break;
 		case LVAL_NUM:
+		case LVAL_BOOL:
 			// nothing to free up
 			break;
 		case LVAL_ERR:
@@ -305,6 +316,8 @@ char* ltype_name(int t) {
 			return "Function";
 		case LVAL_NUM:
 			return "Number";
+		case LVAL_BOOL:
+			return "Boolean";
 		case LVAL_ERR:
 			return "Error";
 		case LVAL_SYM:
@@ -347,6 +360,10 @@ lval* lval_read(mpc_ast_t* t) {
 
 	if (strstr(t->tag, "number")) {
 		return lval_read_num(t);
+	}
+
+	if (strstr(t->tag, "boolean")) {
+		return lval_bool(strcmp(t->contents, "true") == 0);
 	}
 
 	if (strstr(t->tag, "symbol")) {
@@ -402,6 +419,7 @@ lval* lval_copy(lval* v) {
 	    	}
     		break;
     	case LVAL_NUM:
+    	case LVAL_BOOL:
     		x->num = v->num;
     		break;
     
@@ -452,6 +470,9 @@ void lval_print(lval* v) {
 		case LVAL_NUM:
 			printf("%li", v->num);
 			break;
+		case LVAL_BOOL:
+			printf("%s", (v->num) ? "true" : "false");
+			break;
 		case LVAL_ERR:
 			printf("Error: %s", v->err);
 			break;
@@ -485,7 +506,7 @@ void lval_println(lval* v) {
 	putchar('\n');
 }
 
-/* Retreive an environment value */
+/* Retrieve an environment value */
 
 lval* lenv_get(lenv* e, lval* k) {
 
@@ -632,7 +653,6 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
 
 		lval_del(sym);
 		lval_del(val);
-
 	}
 
 	/* Argument list is now bound so can be cleaned up */
@@ -1135,6 +1155,7 @@ int lval_eq(lval* x, lval* y) {
 		/* Compare Number Value */
 
 		case LVAL_NUM:
+		case LVAL_BOOL:
 			return (x->num == y->num);
 
 		/* Compare String Values */
@@ -1352,6 +1373,7 @@ int main (int argc, char** argv) {
 	/* Initialize the mpc parser for Polish Notation */
 
 	mpc_parser_t* Number = mpc_new("number");
+	mpc_parser_t* Bool   = mpc_new("boolean");
 	mpc_parser_t* Symbol = mpc_new("symbol");
 	mpc_parser_t* Sexpr  = mpc_new("sexpr");
 	mpc_parser_t* Qexpr  = mpc_new("qexpr");
@@ -1361,13 +1383,14 @@ int main (int argc, char** argv) {
 	mpca_lang(MPCA_LANG_DEFAULT,
   		" \
     		number : /-?[0-9]+/ ; \
+    		boolean: /^(true|false)$/ ; \
     		symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&%]+/ ; \
     		sexpr  : '(' <expr>* ')' ; \
     		qexpr  : '{' <expr>* '}' ; \
-    		expr   : <number> | <symbol> | <sexpr> | <qexpr> ; \
+    		expr   : <number> | <boolean> | <symbol> | <sexpr> | <qexpr> ; \
     		lispy  : /^/ <expr>* /$/ ; \
   		",
-  		Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
+  		Number, Bool, Symbol, Sexpr, Qexpr, Expr, Lispy);
 
 	/* Register built-in functions */
 
@@ -1376,7 +1399,7 @@ int main (int argc, char** argv) {
 
 	/* Display Initialization Header */
 
-	puts("Lispy Version 0.0.6");
+	puts("Lispy Version 0.0.7");
 	puts("Enter 'quit' to exit\n");
 
 	/* Enter into REPL */
@@ -1409,7 +1432,7 @@ int main (int argc, char** argv) {
 
 	lenv_del(e);
 
-	mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
+	mpc_cleanup(7, Number, Bool, Symbol, Sexpr, Qexpr, Expr, Lispy);
 
 	return EXIT_SUCCESS;
 }
